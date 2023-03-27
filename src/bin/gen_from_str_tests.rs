@@ -30,7 +30,7 @@ const EXTREME_MAX_N_DIGITS: u32 = 183470;
 const DIGITS: &[u8] = b"0123456789";
 
 fn print_test_item(lit: &str, f: FP237) {
-    let (s, e, (h, l)) = f.decode();
+    let (s, e, (h, l)) = f.decode(true);
     println!("\"{}\"\t{}\t{}\t{}\t{}", lit, s, e, h, l)
 }
 

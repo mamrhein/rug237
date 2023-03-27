@@ -31,7 +31,7 @@ const LARGE_INT_EXP_RANGE: RangeInclusive<i32> =
     FAST_UPPER_BOUND_PLUS_1..=EXP_UPPER_BOUND;
 
 fn print_test_item(f: FP237, lit: &str) {
-    let (s, e, (h, l)) = f.decode();
+    let (s, e, (h, l)) = f.decode(true);
     println!("{}\t{}\t{}\t{}\t\"{}\"", s, e, h, l, lit)
 }
 
