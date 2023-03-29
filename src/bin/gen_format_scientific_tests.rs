@@ -9,25 +9,29 @@
 
 use clap::Parser;
 use rand::prelude::*;
-use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, P};
+use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
 use std::ops::RangeInclusive;
 
-const FRACTION_BITS: u32 = P - 1;
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
 const NORMAL_EXP_LOWER_BOUND: i32 = EMIN;
-const FAST_LOWER_BOUND: i32 = -(FRACTION_BITS as i32);
+const FAST_LOWER_BOUND: i32 = 0;
 const FAST_LOWER_BOUND_MINUS_1: i32 = FAST_LOWER_BOUND - 1;
-const FAST_UPPER_BOUND: i32 = (512 - P) as i32;
+const FAST_UPPER_BOUND: i32 = 511_i32;
 const FAST_UPPER_BOUND_PLUS_1: i32 = FAST_UPPER_BOUND + 1;
-const EXP_UPPER_BOUND: i32 = EMAX - FRACTION_BITS as i32;
+const EXP_UPPER_BOUND: i32 = EMAX;
 
+// f256::MIN_GT_ZERO <= |f| < MIN_POSITIVE
 const SUBNORMAL_EXP_RANGE: RangeInclusive<i32> =
     SUBNORMAL_EXP_LOWER_BOUND..=SUBNORMAL_EXP_UPPER_BOUND;
+// f256::MIN_POSITIVE <= |f| < 1
 const FRACT_EXP_RANGE: RangeInclusive<i32> =
     NORMAL_EXP_LOWER_BOUND..=FAST_LOWER_BOUND_MINUS_1;
-const SMALL_FLOAT_EXP_RANGE: RangeInclusive<i32> = FAST_LOWER_BOUND..=-1;
-const SMALL_INT_EXP_RANGE: RangeInclusive<i32> = 0..=FAST_UPPER_BOUND;
+// 1 <= |f| < 2²³⁶
+const SMALL_FLOAT_EXP_RANGE: RangeInclusive<i32> = FAST_LOWER_BOUND..=PM1;
+// 2²³⁶ <= |f| < 2⁵¹²
+const SMALL_INT_EXP_RANGE: RangeInclusive<i32> = PM1..=FAST_UPPER_BOUND;
+// 2⁵¹² <= |f| <= f256::MAX
 const LARGE_INT_EXP_RANGE: RangeInclusive<i32> =
     FAST_UPPER_BOUND_PLUS_1..=EXP_UPPER_BOUND;
 
@@ -63,7 +67,7 @@ fn main() {
     };
 
     for _i in 0..args.n_test_data {
-        let f = FP237::rnd_from_exp_range(exp_range);
+        let f = FP237::random_from_exp_range(exp_range);
         let p = rng.gen_range(0..=75);
         // rug takes the precision as the total number of digits, not the number
         // of fractional digits!

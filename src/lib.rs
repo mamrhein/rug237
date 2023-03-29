@@ -17,10 +17,12 @@ use std::ops::{Add, RangeInclusive, Sub};
 use std::str::FromStr;
 
 pub const P: u32 = 237;
+pub const PM1: i32 = P as i32 - 1;
 pub const EMAX: i32 = 262143;
 pub const EMIN: i32 = 1 - EMAX;
-pub const MIN_EXP_SUBNORMAL: i32 = EMIN - P as i32 + 1;
+pub const MIN_EXP_SUBNORMAL: i32 = EMIN - PM1;
 
+#[derive(Clone)]
 pub struct FP237 {
     pub(crate) f: Float,
     pub(crate) o: Ordering,
@@ -99,12 +101,12 @@ impl FP237 {
         }
     }
 
-    pub fn rnd_from_exp_range(exp_range: &RangeInclusive<i32>) -> Self {
+    pub fn random_from_exp_range(exp_range: &RangeInclusive<i32>) -> Self {
         const HI_HIDDEN_BIT: u128 = 1_u128 << 108;
         const HI_MAX: u128 = HI_HIDDEN_BIT - 1;
         let mut rng = thread_rng();
         let s = rng.gen_range(0..=1_u32);
-        let t: i32 = rng.gen_range(exp_range.clone());
+        let t: i32 = rng.gen_range(exp_range.clone()) - PM1;
         let mut h = rng.gen_range(0..=HI_MAX);
         if t >= EMIN {
             h += HI_HIDDEN_BIT;
@@ -176,37 +178,23 @@ impl LowerExp for FP237 {
     }
 }
 
-impl Add for FP237 {
-    type Output = Self;
+impl Add for &FP237 {
+    type Output = FP237;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let f = self.f + rhs.f;
-        let o = match (self.o, rhs.o) {
-            (o, Ordering::Equal) => o,
-            (Ordering::Equal, o) => o,
-            (Ordering::Less, Ordering::Greater) => Ordering::Equal,
-            (Ordering::Greater, Ordering::Less) => Ordering::Equal,
-            _ => self.o,
-        };
-        Self { f, o }
+        let f = &self.f + &rhs.f;
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self::Output { f, o }
     }
 }
 
-impl Sub for FP237 {
-    type Output = Self;
+impl Sub for &FP237 {
+    type Output = FP237;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let f = self.f - rhs.f;
-        let o = match (self.o, rhs.o) {
-            (Ordering::Less, Ordering::Less) => Ordering::Equal,
-            (Ordering::Less, _) => Ordering::Less,
-            (Ordering::Equal, Ordering::Equal) => Ordering::Equal,
-            (Ordering::Equal, Ordering::Less) => Ordering::Less,
-            (Ordering::Equal, Ordering::Greater) => Ordering::Greater,
-            (Ordering::Greater, Ordering::Greater) => Ordering::Equal,
-            (Ordering::Greater, _) => Ordering::Greater,
-        };
-        Self { f, o }
+        let f = &self.f - &rhs.f;
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self::Output { f, o }
     }
 }
 
@@ -319,7 +307,7 @@ mod rnd_tests {
     #[test]
     fn test_normal_lt1() {
         let exp_range: RangeInclusive<i32> = -304..=-236;
-        let f = FP237::rnd_from_exp_range(&exp_range);
+        let f = FP237::random_from_exp_range(&exp_range);
         assert_eq!(f.f.prec(), P);
         let (s, e, (h, _)) = f.decode(true);
         assert!(s == 0 || s == 1);
@@ -330,7 +318,7 @@ mod rnd_tests {
     #[test]
     fn test_normal_2_pow_275() {
         let exp_range: RangeInclusive<i32> = 275..=275;
-        let f = FP237::rnd_from_exp_range(&exp_range);
+        let f = FP237::random_from_exp_range(&exp_range);
         assert_eq!(f.f.prec(), P);
         let (s, e, (h, _)) = f.decode(false);
         assert!(s == 0 || s == 1);
@@ -364,7 +352,10 @@ mod add_sub_tests {
 
     #[test]
     fn test_add() {
-        let c = Integer::parse("220855883097298041197912187593213263622162528096038865363210905810239470").unwrap().complete();
+        let c = Integer::parse(
+            "220855883097298041197912187593213263622162528096038865363210905810239470")
+            .unwrap()
+            .complete();
         let e = Float::parse("-376").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
@@ -375,7 +366,7 @@ mod add_sub_tests {
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
         let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
-        let z = x + y;
+        let z = &x + &y;
         println!("{:?}", z.decode(false));
         assert_eq!(
             z.decode(false),
@@ -385,7 +376,10 @@ mod add_sub_tests {
 
     #[test]
     fn test_sub() {
-        let mut c = Integer::parse("207052390403716913623049481515649182342802536657260232019104846713985880").unwrap().complete();
+        let mut c = Integer::parse(
+            "207052390403716913623049481515649182342802536657260232019104846713985880")
+            .unwrap()
+            .complete();
         let e = Float::parse("-262376").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
@@ -395,8 +389,36 @@ mod add_sub_tests {
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
         let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
-        let z = x - y;
+        let z = &x - &y;
         println!("{:?}", z.decode(true));
         assert_eq!(z.decode(true), (0, -262376, (0, 1)));
+    }
+
+    #[test]
+    fn test_subnormal_add_subnormal_giving_subnormal() {
+        let e = Float::parse("-262378").unwrap().complete(P);
+        let t = e.exp2();
+        let c = Integer::parse(
+            "2555352441053941610851869298425305547681183005143821848",
+        )
+        .unwrap()
+        .complete();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let x = FP237 { f, o };
+        println!("{:?}", x.decode(false));
+        let c = Integer::parse("21747048302197486").unwrap().complete();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let y = FP237 { f, o };
+        println!("{:?}", y.decode(false));
+        let z = &x + &y;
+        println!("{:?}", z.decode(false));
+        assert_eq!(
+            z.decode(false),
+            (
+                0,
+                -262378,
+                (7509505897047126, 339876022494367207146887125588680943878)
+            )
+        );
     }
 }
