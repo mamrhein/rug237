@@ -106,17 +106,26 @@ impl FP237 {
         const HI_MAX: u128 = HI_HIDDEN_BIT - 1;
         let mut rng = thread_rng();
         let s = rng.gen_range(0..=1_u32);
-        let t: i32 = rng.gen_range(exp_range.clone()) - PM1;
+        let mut t: i32 = rng.gen_range(exp_range.clone());
         let mut h = rng.gen_range(0..=HI_MAX);
-        if t >= EMIN {
-            h += HI_HIDDEN_BIT;
-        }
         let l = rng.gen_range(0..=u128::MAX);
+        let mut prec = P;
+        if t >= EMIN {
+            t -= PM1;
+            h += HI_HIDDEN_BIT;
+        } else {
+            let msb = if h != 0 {
+                128 - h.leading_zeros()
+            } else {
+                256 - l.leading_zeros()
+            };
+            prec = msb;
+        }
         let mut c = (Integer::from(h) << 128) + l;
         let (mut f, o) = if t < 0 {
-            let mut p = Float::new(256);
+            let mut p = Float::new(P);
             p.assign(Float::i_exp(2, t));
-            Float::with_val_round(P, &c * &p, Round::Nearest)
+            Float::with_val_round(prec, &c * &p, Round::Nearest)
         } else {
             let p = Integer::from(2).pow(t as u32);
             c *= p;
