@@ -13,7 +13,7 @@ use rug::ops::Pow;
 use rug::{Assign, Float, Integer};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, LowerExp};
-use std::ops::{Add, RangeInclusive, Sub};
+use std::ops::{Add, Mul, RangeInclusive, Sub};
 use std::str::FromStr;
 
 pub const P: u32 = 237;
@@ -74,7 +74,7 @@ impl FP237 {
                     }
                 }
                 if e > EMAX {
-                    return (s, EMAX + 1, (0, 0));
+                    return (s, EMAX + 1 - PM1, (0, 0));
                 }
                 if e < MIN_EXP_SUBNORMAL {
                     let shift = MIN_EXP_SUBNORMAL - e;
@@ -91,6 +91,7 @@ impl FP237 {
                     e = MIN_EXP_SUBNORMAL;
                 }
                 if i == 0 {
+                    // println!("Near 0: {:?}", self.f.to_integer_exp());
                     return (s, 0, (0, 0));
                 }
                 let h = Integer::from(&i / &b).to_u128().unwrap();
@@ -202,6 +203,16 @@ impl Sub for &FP237 {
 
     fn sub(self, rhs: Self) -> Self::Output {
         let f = &self.f - &rhs.f;
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self::Output { f, o }
+    }
+}
+
+impl Mul for &FP237 {
+    type Output = FP237;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let f = &self.f * &rhs.f;
         let (f, o) = Float::with_val_round(P, f, Round::Nearest);
         Self::Output { f, o }
     }
