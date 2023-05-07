@@ -13,7 +13,7 @@ use rug::ops::Pow;
 use rug::{Assign, Float, Integer};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, LowerExp};
-use std::ops::{Add, Div, Mul, RangeInclusive, Sub};
+use std::ops::{Add, Div, Mul, RangeInclusive, Rem, Sub};
 use std::str::FromStr;
 
 pub const P: u32 = 237;
@@ -61,13 +61,20 @@ impl FP237 {
         }
     }
 
+    pub fn trunc(&self) -> Self {
+        FP237 {
+            f: self.f.clone().trunc(),
+            o: Ordering::Equal,
+        }
+    }
+
     pub fn decode(&self, reduce: bool) -> (u32, i32, (u128, u128)) {
         let b: Integer = Integer::from(u128::MAX) + 1;
         match self.f.to_integer_exp() {
             Some((mut i, mut e)) => {
                 let s = self.f.is_sign_negative() as u32;
                 i.abs_mut();
-                if reduce {
+                if reduce && i != 0 {
                     while i.is_even() {
                         i >>= 1;
                         e += 1;
@@ -225,6 +232,16 @@ impl Div for &FP237 {
         let f = &self.f / &rhs.f;
         let (f, o) = Float::with_val_round(P, f, Round::Nearest);
         Self::Output { f, o }
+    }
+}
+
+impl Rem for &FP237 {
+    type Output = FP237;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        let q = self / rhs;
+        let t = &q.trunc() * rhs;
+        self - &t
     }
 }
 
