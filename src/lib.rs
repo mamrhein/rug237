@@ -515,3 +515,49 @@ mod mul_tests {
         assert_eq!(z.decode(false), ((0, 262144, (0, 0))));
     }
 }
+
+#[cfg(test)]
+mod div_tests {
+    use super::*;
+    use rug::ops::CompleteRound;
+    use rug::Complete;
+
+    #[test]
+    fn test_normal() {
+        let c = Integer::parse("555").unwrap().complete();
+        let e = Float::parse("-23718").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let x = FP237 { f, o };
+        // println!("{:?}", x.decode(false));
+        let c = Integer::parse("7777").unwrap().complete();
+        let e = Float::parse("-23720").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let y = FP237 { f, o };
+        // println!("{:?}", y.decode(false));
+        let z = &x / &y;
+        // println!("{:?}", z.decode(true));
+        assert_eq!(
+            z.decode(false),
+            ((0, -238, (370544523143478119304928052297435, 56225130705079841269183023087285862379)))
+        );
+    }
+
+    #[test]
+    fn test_overflow() {
+        let e = Float::parse("262140").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let x = FP237 { f, o };
+        println!("{:?}", x.decode(false));
+        let e = Float::parse("4").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let y = FP237 { f, o };
+        println!("{:?}", y.decode(false));
+        let z = &x * &y;
+        println!("{:?}", z.decode(false));
+        assert_eq!(z.decode(false), ((0, 262144, (0, 0))));
+    }
+}
