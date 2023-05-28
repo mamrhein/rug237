@@ -239,9 +239,9 @@ impl Rem for &FP237 {
     type Output = FP237;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        let q = self / rhs;
-        let t = &q.trunc() * rhs;
-        self - &t
+        let f = &self.f % &rhs.f;
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self::Output { f, o }
     }
 }
 
@@ -559,5 +559,34 @@ mod div_tests {
         let z = &x * &y;
         println!("{:?}", z.decode(false));
         assert_eq!(z.decode(false), ((0, 262144, (0, 0))));
+    }
+}
+
+#[cfg(test)]
+mod rem_tests {
+    use rug::ops::CompleteRound;
+    use super::*;
+
+    #[test]
+    fn test_normal_1() {
+        let (f, o) = Float::with_val_round(P, 3.297338e302, Round::Nearest);
+        let x = FP237 { f, o };
+        let (f, o) = Float::with_val_round(P, 1.008297e-297, Round::Nearest);
+        let y = FP237 { f, o };
+        let (f,o) = Float::with_val_round(P, 7.06898110067969e-298, Round::Nearest);
+        let z = FP237 { f, o };
+        // println!("{x:e} % {y:e} = {z:e}");
+        assert_eq!((&x % &y).f, z.f);
+    }
+
+    #[test]
+    fn test_normal_2() {
+        let f = Float::parse("1.4e78118").unwrap().complete(P);
+        let x = FP237 { f, o: Ordering::Equal };
+        let f = Float::parse("1.7e-25009").unwrap().complete(P);
+        let y = FP237 { f, o: Ordering::Equal };
+        let z = &x % &y;
+        println!("{x:e} % {y:e} = {z:e}");
+        assert_eq!(z.f, x.f % y.f);
     }
 }
