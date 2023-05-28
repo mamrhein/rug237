@@ -12,7 +12,7 @@ use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
 use std::cmp::{max, min};
 use std::ops::RangeInclusive;
 
-const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
+const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL + 1;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
 const NORMAL_EXP_LOWER_BOUND: i32 = EMIN;
 const EXP_UPPER_BOUND: i32 = EMAX as i32;
