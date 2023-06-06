@@ -56,8 +56,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let n_sub_normal = args.n_test_data / 40 + 1;
-    let n_normal = args.n_test_data - 2 * n_sub_normal;
+    let n_sub_normal = args.n_test_data / 100 + 1;
+    let n_normal = args.n_test_data - n_sub_normal;
 
     for _i in 0..n_normal {
         let x = FP237::random_from_exp_range(&NORMAL_EXP_RANGE);
