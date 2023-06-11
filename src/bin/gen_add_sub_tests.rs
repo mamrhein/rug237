@@ -7,9 +7,10 @@
 // $Source$
 // $Revision$
 
+use std::ops::RangeInclusive;
+
 use clap::Parser;
 use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, P};
-use std::ops::RangeInclusive;
 
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;

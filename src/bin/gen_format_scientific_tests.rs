@@ -7,10 +7,11 @@
 // $Source$
 // $Revision$
 
+use std::ops::RangeInclusive;
+
 use clap::Parser;
 use rand::prelude::*;
 use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
-use std::ops::RangeInclusive;
 
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
@@ -69,8 +70,8 @@ fn main() {
     for _i in 0..args.n_test_data {
         let f = FP237::random_from_exp_range(exp_range);
         let p = rng.gen_range(0..=75);
-        // rug takes the precision as the total number of digits, not the number
-        // of fractional digits!
+        // rug takes the precision as the total number of digits, not the
+        // number of fractional digits!
         let s = format!("{f:.*e}", p + 1);
         print_test_item(f, p, &*s);
     }

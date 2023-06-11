@@ -7,11 +7,11 @@
 // $Source$
 // $Revision$
 
+use std::{ops::RangeInclusive, str::FromStr};
+
 use clap::Parser;
 use rand::prelude::*;
 use rug237::FP237;
-use std::ops::RangeInclusive;
-use std::str::FromStr;
 
 const E10MAX: i32 = 78913;
 const E10MIN: i32 = 1 - E10MAX;
