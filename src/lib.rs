@@ -7,14 +7,19 @@
 // $Source$
 // $Revision$
 
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Formatter, LowerExp},
+    ops::{Add, Div, Mul, RangeInclusive, Rem, Sub},
+    str::FromStr,
+};
+
 use rand::prelude::*;
-use rug::float::{Constant, ParseFloatError, Round};
-use rug::ops::Pow;
-use rug::{Assign, Float, Integer};
-use std::cmp::Ordering;
-use std::fmt::{Display, Formatter, LowerExp};
-use std::ops::{Add, Div, Mul, RangeInclusive, Rem, Sub};
-use std::str::FromStr;
+use rug::{
+    float::{Constant, ParseFloatError, Round},
+    ops::Pow,
+    Assign, Float, Integer,
+};
 
 pub const P: u32 = 237;
 pub const PM1: i32 = P as i32 - 1;
@@ -22,7 +27,7 @@ pub const EMAX: i32 = 262143;
 pub const EMIN: i32 = 1 - EMAX;
 pub const MIN_EXP_SUBNORMAL: i32 = EMIN - PM1;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FP237 {
     pub(crate) f: Float,
     pub(crate) o: Ordering,
@@ -64,6 +69,20 @@ impl FP237 {
     pub fn trunc(&self) -> Self {
         FP237 {
             f: self.f.clone().trunc(),
+            o: Ordering::Equal,
+        }
+    }
+
+    pub fn abs(self) -> Self {
+        FP237 {
+            f: self.f.abs(),
+            o: Ordering::Equal,
+        }
+    }
+
+    pub fn sqrt(self) -> Self {
+        FP237 {
+            f: self.f.sqrt(),
             o: Ordering::Equal,
         }
     }
@@ -133,7 +152,9 @@ impl FP237 {
         let (mut f, o) = if t < 0 {
             let mut p = Float::new(P);
             p.assign(Float::i_exp(2, t));
-            Float::with_val_round(prec, &c * &p, Round::Nearest)
+            let (fr, o) =
+                Float::with_val_round(prec, &c * &p, Round::Nearest);
+            (Float::with_val(P, fr), o)
         } else {
             let p = Integer::from(2).pow(t as u32);
             c *= p;
@@ -345,6 +366,28 @@ mod decode_tests {
         assert_eq!(h.leading_zeros(), (256 - P));
         assert_eq!(e, 275);
     }
+
+    #[test]
+    fn test_normal_1() {
+        let (e, (h, l)) = (
+            -131198,
+            (
+                531439310060859797527772502089072_u128,
+                50579904501390594736454450167121974314_u128,
+            ),
+        );
+        let mut m = Integer::from(h);
+        m <<= 128;
+        m += Integer::from(l);
+        let t = Float::with_val(P, e).exp2();
+        let f = FP237 {
+            f: m * t,
+            o: Ordering::Equal,
+        };
+        assert_eq!(f.decode(false), (0_u32, e, (h, l)));
+        println!("{:?}", f.decode(false));
+        println!("{:?}", f.decode(true));
+    }
 }
 
 #[cfg(test)]
@@ -393,9 +436,9 @@ mod const_tests {
 
 #[cfg(test)]
 mod add_sub_tests {
+    use rug::{ops::CompleteRound, Complete};
+
     use super::*;
-    use rug::ops::CompleteRound;
-    use rug::Complete;
 
     #[test]
     fn test_add() {
@@ -472,9 +515,9 @@ mod add_sub_tests {
 
 #[cfg(test)]
 mod mul_tests {
+    use rug::{ops::CompleteRound, Complete};
+
     use super::*;
-    use rug::ops::CompleteRound;
-    use rug::Complete;
 
     #[test]
     fn test_normal() {
@@ -518,9 +561,9 @@ mod mul_tests {
 
 #[cfg(test)]
 mod div_tests {
+    use rug::{ops::CompleteRound, Complete};
+
     use super::*;
-    use rug::ops::CompleteRound;
-    use rug::Complete;
 
     #[test]
     fn test_normal() {
@@ -540,7 +583,14 @@ mod div_tests {
         // println!("{:?}", z.decode(true));
         assert_eq!(
             z.decode(false),
-            ((0, -238, (370544523143478119304928052297435, 56225130705079841269183023087285862379)))
+            ((
+                0,
+                -238,
+                (
+                    370544523143478119304928052297435,
+                    56225130705079841269183023087285862379
+                )
+            ))
         );
     }
 
@@ -565,6 +615,7 @@ mod div_tests {
 #[cfg(test)]
 mod rem_tests {
     use rug::ops::CompleteRound;
+
     use super::*;
 
     #[test]
@@ -573,7 +624,8 @@ mod rem_tests {
         let x = FP237 { f, o };
         let (f, o) = Float::with_val_round(P, 1.008297e-297, Round::Nearest);
         let y = FP237 { f, o };
-        let (f,o) = Float::with_val_round(P, 7.06898110067969e-298, Round::Nearest);
+        let (f, o) =
+            Float::with_val_round(P, 7.06898110067969e-298, Round::Nearest);
         let z = FP237 { f, o };
         // println!("{x:e} % {y:e} = {z:e}");
         assert_eq!((&x % &y).f, z.f);
@@ -582,11 +634,118 @@ mod rem_tests {
     #[test]
     fn test_normal_2() {
         let f = Float::parse("1.4e78118").unwrap().complete(P);
-        let x = FP237 { f, o: Ordering::Equal };
+        let x = FP237 {
+            f,
+            o: Ordering::Equal,
+        };
         let f = Float::parse("1.7e-25009").unwrap().complete(P);
-        let y = FP237 { f, o: Ordering::Equal };
+        let y = FP237 {
+            f,
+            o: Ordering::Equal,
+        };
         let z = &x % &y;
         println!("{x:e} % {y:e} = {z:e}");
         assert_eq!(z.f, x.f % y.f);
+    }
+}
+
+#[cfg(test)]
+mod sqrt_tests {
+    use rug::{ops::CompleteRound, Complete};
+
+    use super::*;
+
+    fn print_test_item(x: &FP237, z: &FP237) {
+        let rx = x.decode(true);
+        let rz = z.decode(true);
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            rx.0, rx.1, rx.2 .0, rx.2 .1, rz.0, rz.1, rz.2 .0, rz.2 .1,
+        );
+    }
+
+    #[test]
+    fn test_normal_1() {
+        let (f, o) = Float::with_val_round(P, 7., Round::Nearest);
+        let x = FP237 { f, o };
+        let z = x.clone().sqrt();
+        println!("√{x:e} = {z:e}");
+        println!("{:?}", x.decode(false));
+        println!("{:?}", z.decode(false));
+        assert_eq!(z.f, x.f.clone().sqrt());
+    }
+
+    #[test]
+    fn test_normal_2() {
+        let c = Integer::parse("73913349228891354865085158512847")
+            .unwrap()
+            .complete();
+        let e = Float::parse("-262021").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let x = FP237 { f, o };
+        let z = x.clone().sqrt();
+        println!("√{x:e} = {z:e}");
+        println!("{:?}", x.decode(true));
+        println!("{:?}", z.decode(true));
+        assert_eq!(z.f, x.f.clone().sqrt());
+    }
+
+    #[test]
+    fn test_normal_3() {
+        let (e, (h, l)) =
+            (-262030, (0_u128, 217574416850779740425388533631545_u128));
+        let mut m = Integer::from(h);
+        m <<= 128;
+        m += Integer::from(l);
+        let t = Float::with_val(P, e).exp2();
+        let f = FP237 {
+            f: m * t,
+            o: Ordering::Equal,
+        };
+        let r = f.clone().sqrt();
+        println!("√{f:e} = {r:e}");
+        println!("{:?}", f.decode(true));
+        println!("{:?}", f.decode(false));
+        println!("{:?}", r.decode(true));
+        println!("{:?}", r.decode(false));
+        print_test_item(&f, &r);
+        assert_eq!(r.f, f.f.clone().sqrt());
+    }
+
+    #[test]
+    fn test_normal_4() {
+        let (e, (h, l)) =
+            (-262234, (0_u128, 201645646862054831249887812997549_u128));
+        let mut m = Integer::from(h);
+        m <<= 128;
+        m += Integer::from(l);
+        let t = Float::with_val(P, e).exp2();
+        let f = FP237 {
+            f: m * t,
+            o: Ordering::Equal,
+        };
+        let r = f.clone().sqrt();
+        println!("√{f:e} = {r:e}");
+        println!("{:?}", f.decode(true));
+        println!("{:?}", f.decode(false));
+        println!("{:?}", r.decode(true));
+        println!("{:?}", r.decode(false));
+        print_test_item(&f, &r);
+        assert_eq!(r.f, f.f.clone().sqrt());
+    }
+
+    #[test]
+    fn test_subnormal_1() {
+        let c = Integer::parse("6864413414364755142662776660834762333374747222713421199918761912559").unwrap().complete();
+        let e = Float::parse("-262375").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
+        let x = FP237 { f, o };
+        let z = x.clone().sqrt();
+        println!("√{x:e} = {z:e}");
+        println!("{:?}", x.decode(true));
+        println!("{:?}", z.decode(true));
+        assert_eq!(z.f, x.f.clone().sqrt());
     }
 }
