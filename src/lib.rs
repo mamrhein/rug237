@@ -87,20 +87,26 @@ impl FP237 {
         }
     }
 
+    pub fn fma(&self, m: &Self, a: &Self) -> Self {
+        let f = &self.f * &m.f + &a.f;
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        FP237 { f, o }
+    }
+
     pub fn decode(&self, reduce: bool) -> (u32, i32, (u128, u128)) {
         let b: Integer = Integer::from(u128::MAX) + 1;
         match self.f.to_integer_exp() {
             Some((mut i, mut e)) => {
                 let s = self.f.is_sign_negative() as u32;
+                if e > EMAX - PM1 {
+                    return (s, EMAX + 1, (0, 0));
+                }
                 i.abs_mut();
                 if reduce && i != 0 {
                     while i.is_even() {
                         i >>= 1;
                         e += 1;
                     }
-                }
-                if e > EMAX - PM1 {
-                    return (s, EMAX + 1, (0, 0));
                 }
                 if e < MIN_EXP_SUBNORMAL {
                     let shift = MIN_EXP_SUBNORMAL - e;
@@ -747,5 +753,80 @@ mod sqrt_tests {
         println!("{:?}", x.decode(true));
         println!("{:?}", z.decode(true));
         assert_eq!(z.f, x.f.clone().sqrt());
+    }
+}
+
+#[cfg(test)]
+mod fma_tests {
+    use rug::ops::CompleteRound;
+
+    use super::*;
+
+    #[test]
+    fn test_no_diff_to_non_fused() {
+        let t = Float::parse("1.5").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let one_and_a_half = FP237 { f, o };
+        let t = Float::parse("2.0").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let two = FP237 { f, o };
+        let t = Float::parse("3.0").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let three = FP237 { f, o };
+        assert_eq!(
+            one_and_a_half.fma(&two, &FP237::Pi()),
+            &FP237::Pi() + &three
+        );
+    }
+
+    #[test]
+    fn test_small_diff_to_non_fused() {
+        let t = Float::parse("1.0").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let one = FP237 { f, o };
+        let e = Float::parse("-237").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let d = FP237 { f, o };
+        let x = &one - &d;
+        let y = &x;
+        let a = &(&d + &d) - &one;
+        let z = x.fma(y, &a);
+        // println!(
+        //     " d: {d:e}\n x: {x:e}\n y: {y:e}\nxy: {:e}\n a: {a:e}\n z: \
+        //      {z:e}\n r: {:e}",
+        //     &(&x * y),
+        //     &(&x * y) + &a
+        // );
+        assert_eq!(z, &d * &d);
+    }
+
+    #[test]
+    fn test_product_near_inf() {
+        let e = Float::parse("59475").unwrap().complete(P);
+        let t = e.exp2();
+        let m = Float::parse("-40901480905045544498406800675204866629143691002339835783757486257606735").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
+        let x = FP237 { f, o };
+        println!("{:?}", x.decode(true));
+        let e = Float::parse("202197").unwrap().complete(P);
+        let t = e.exp2();
+        let m = Float::parse("190854343998886546791476171399145128666427780394331938864477511960147119").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
+        let y = FP237 { f, o };
+        println!("{:?}", y.decode(true));
+        let e = Float::parse("-7930").unwrap().complete(P);
+        let t = e.exp2();
+        let m = Float::parse("-12842618913023200758447616413804922508126617643079319769168854255306905").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
+        let a = FP237 { f, o };
+        println!("{:?}", a.decode(true));
+        let z = x.fma(&y, &a);
+        println!("{:?}", z.decode(true));
+        println!(
+            " x: {x:e}\n y: {y:e}\nxy: {:e}\n a: {a:e}\n z: {z:e}\n r: {:e}",
+            &(&x * &y),
+            &(&x * &y) + &a
+        );
     }
 }
