@@ -36,7 +36,7 @@ pub struct FP237 {
 impl FP237 {
     #[allow(non_snake_case)]
     pub fn Log2() -> Self {
-        FP237 {
+        Self {
             f: Float::with_val(P, Constant::Log2),
             o: Ordering::Equal,
         }
@@ -44,7 +44,7 @@ impl FP237 {
 
     #[allow(non_snake_case)]
     pub fn Pi() -> Self {
-        FP237 {
+        Self {
             f: Float::with_val(P, Constant::Pi),
             o: Ordering::Equal,
         }
@@ -52,7 +52,7 @@ impl FP237 {
 
     #[allow(non_snake_case)]
     pub fn Euler() -> Self {
-        FP237 {
+        Self {
             f: Float::with_val(P, Constant::Euler),
             o: Ordering::Equal,
         }
@@ -60,28 +60,28 @@ impl FP237 {
 
     #[allow(non_snake_case)]
     pub fn Catalan() -> Self {
-        FP237 {
+        Self {
             f: Float::with_val(P, Constant::Catalan),
             o: Ordering::Equal,
         }
     }
 
     pub fn trunc(&self) -> Self {
-        FP237 {
+        Self {
             f: self.f.clone().trunc(),
             o: Ordering::Equal,
         }
     }
 
     pub fn abs(self) -> Self {
-        FP237 {
+        Self {
             f: self.f.abs(),
             o: Ordering::Equal,
         }
     }
 
     pub fn sqrt(self) -> Self {
-        FP237 {
+        Self {
             f: self.f.sqrt(),
             o: Ordering::Equal,
         }
@@ -90,7 +90,13 @@ impl FP237 {
     pub fn fma(&self, m: &Self, a: &Self) -> Self {
         let f = &self.f * &m.f + &a.f;
         let (f, o) = Float::with_val_round(P, f, Round::Nearest);
-        FP237 { f, o }
+        Self { f, o }
+    }
+
+    pub fn sos(&self, other: &Self) -> Self {
+        let f = self.f.clone().mul_add_mul(&self.f, &other.f, &other.f);
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
     }
 
     pub fn decode(&self, reduce: bool) -> (u32, i32, (u128, u128)) {
@@ -828,5 +834,47 @@ mod fma_tests {
             &(&x * &y),
             &(&x * &y) + &a
         );
+    }
+}
+
+#[cfg(test)]
+mod sos_tests {
+    use rug::ops::CompleteRound;
+
+    use super::*;
+
+    #[test]
+    fn test_small_diff_to_non_fused() {
+        let t = Float::parse("1.0").unwrap().complete(P);
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let one = FP237 { f, o };
+        let e = Float::parse("-117").unwrap().complete(P);
+        let t = e.exp2();
+        let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
+        let d = FP237 { f, o };
+        let d2 = &d * &d;
+        let x = &one + &d;
+        let y = &one - &d;
+        let z = x.sos(&y);
+        let mut t = (&d.f * &d.f).complete(2 * P + 2);
+        t *= 2;
+        t += 2;
+        let (f, o) = Float::with_val_round(P, t, Round::Nearest);
+        let r = FP237 { f, o };
+        println!(" d: {:?}\nd2: {:?}", d.decode(false), d2.decode(false));
+        println!(" 1: {:?}", one.decode(false));
+        println!(" x: {:?}\n y: {:?}", x.decode(false), y.decode(false));
+        println!(
+            "x2: {:?}\ny2: {:?}",
+            &(&x * &x).decode(false),
+            &(&y * &y).decode(false)
+        );
+        println!(" z: {:?}\n r: {:?}", z.decode(false), r.decode(false));
+        // println!(
+        //     " d: {d:?}\n x: {x:?}\n y: {y:?}\n z: {z:?}\n r: {r:?},\n f: \
+        //      {:?}",
+        //     &two + &(&d2 + &d2)
+        // );
+        assert_eq!(z.f, r.f);
     }
 }
