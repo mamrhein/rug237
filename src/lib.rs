@@ -29,7 +29,7 @@ pub const MIN_EXP_SUBNORMAL: i32 = EMIN - PM1;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FP237 {
-    pub(crate) f: Float,
+    pub f: Float,
     pub(crate) o: Ordering,
 }
 
@@ -62,6 +62,13 @@ impl FP237 {
     pub fn Catalan() -> Self {
         Self {
             f: Float::with_val(P, Constant::Catalan),
+            o: Ordering::Equal,
+        }
+    }
+
+    pub fn new(val: Float) -> Self {
+        Self {
+            f: val,
             o: Ordering::Equal,
         }
     }
