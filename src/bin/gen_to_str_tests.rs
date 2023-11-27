@@ -10,7 +10,7 @@
 use std::ops::RangeInclusive;
 
 use clap::Parser;
-use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
+use rug237::{EMAX, EMIN, FP255, MIN_EXP_SUBNORMAL, PM1};
 
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
@@ -35,7 +35,7 @@ const SMALL_INT_EXP_RANGE: RangeInclusive<i32> = PM1..=FAST_UPPER_BOUND;
 const LARGE_INT_EXP_RANGE: RangeInclusive<i32> =
     FAST_UPPER_BOUND_PLUS_1..=EXP_UPPER_BOUND;
 
-fn print_test_item(f: FP237, lit: &str) {
+fn print_test_item(f: FP255, lit: &str) {
     let (s, e, (h, l)) = f.decode(true);
     println!("{}\t{}\t{}\t{}\t\"{}\"", s, e, h, l, lit)
 }
@@ -66,7 +66,7 @@ fn main() {
     };
 
     for _i in 0..args.n_test_data {
-        let f = FP237::random_from_exp_range(exp_range);
+        let f = FP255::random_from_exp_range(exp_range);
         let s = format!("{f:.0}");
         print_test_item(f, &*s);
     }

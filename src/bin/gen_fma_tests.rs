@@ -13,7 +13,7 @@ use std::{
 };
 
 use clap::Parser;
-use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
+use rug237::{EMAX, EMIN, FP255, MIN_EXP_SUBNORMAL, PM1};
 
 const EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const EXP_UPPER_BOUND: i32 = EMAX as i32;
@@ -21,7 +21,7 @@ const EXP_UPPER_BOUND: i32 = EMAX as i32;
 // f256::MIN_GT_ZERO <= |f| <= f256::MAX
 const EXP_RANGE: RangeInclusive<i32> = EXP_LOWER_BOUND..=EXP_UPPER_BOUND;
 
-fn print_test_item(x: &FP237, y: &FP237, a: &FP237, z: &FP237) {
+fn print_test_item(x: &FP255, y: &FP255, a: &FP255, z: &FP255) {
     let rx = x.decode(true);
     let ry = y.decode(true);
     let ra = a.decode(true);
@@ -59,12 +59,12 @@ fn main() {
     let args = Args::parse();
 
     for _i in 0..args.n_test_data {
-        let x = FP237::random_from_exp_range(&EXP_RANGE);
+        let x = FP255::random_from_exp_range(&EXP_RANGE);
         let (_, e, _) = x.decode(false);
         let lower_limit = max(EMIN - PM1, EMIN - PM1 - e);
         let upper_limit = min(EMAX - PM1, EMAX - PM1 - e);
-        let y = FP237::random_from_exp_range(&(lower_limit..=upper_limit));
-        let a = FP237::random_from_exp_range(&EXP_RANGE);
+        let y = FP255::random_from_exp_range(&(lower_limit..=upper_limit));
+        let a = FP255::random_from_exp_range(&EXP_RANGE);
         let z = x.fma(&y, &a);
         let t = &(&x * &y) + &a;
         if z != t {

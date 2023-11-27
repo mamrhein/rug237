@@ -11,7 +11,7 @@ use std::{ops::RangeInclusive, str::FromStr};
 
 use clap::Parser;
 use rand::prelude::*;
-use rug237::FP237;
+use rug237::FP255;
 
 const E10MAX: i32 = 78913;
 const E10MIN: i32 = 1 - E10MAX;
@@ -29,7 +29,7 @@ const EXTREME_MAX_N_DIGITS: u32 = 183470;
 
 const DIGITS: &[u8] = b"0123456789";
 
-fn print_test_item(lit: &str, f: FP237) {
+fn print_test_item(lit: &str, f: FP255) {
     let (s, e, (h, l)) = f.decode(true);
     println!("\"{}\"\t{}\t{}\t{}\t{}", lit, s, e, h, l)
 }
@@ -111,7 +111,7 @@ fn main() {
 
     for _i in 0..args.n_test_data {
         let s = gen_number_str(exp_range);
-        let f = FP237::from_str(&*s).unwrap();
+        let f = FP255::from_str(&*s).unwrap();
         print_test_item(&*s, f);
     }
 }

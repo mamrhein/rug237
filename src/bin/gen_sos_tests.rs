@@ -10,13 +10,13 @@
 use std::ops::RangeInclusive;
 
 use clap::Parser;
-use rug237::{EMAX, EMIN, FP237};
+use rug237::{EMAX, EMIN, FP255};
 
 const EXP_LOWER_BOUND: i32 = EMIN / 4 - 1;
 const EXP_UPPER_BOUND: i32 = EMAX / 4 + 1;
 const EXP_RANGE: RangeInclusive<i32> = EXP_LOWER_BOUND..=EXP_UPPER_BOUND;
 
-fn print_test_item(x: &FP237, y: &FP237, z: &FP237) {
+fn print_test_item(x: &FP255, y: &FP255, z: &FP255) {
     let rx = x.decode(true);
     let ry = y.decode(true);
     let rz = z.decode(true);
@@ -51,8 +51,8 @@ fn main() {
     let n = args.n_test_data;
 
     for _i in 0..n {
-        let x = FP237::random_from_exp_range(&EXP_RANGE);
-        let y = FP237::random_from_exp_range(&EXP_RANGE);
+        let x = FP255::random_from_exp_range(&EXP_RANGE);
+        let y = FP255::random_from_exp_range(&EXP_RANGE);
         let z = &x.sos(&y);
         print_test_item(&x, &y, &z);
     }

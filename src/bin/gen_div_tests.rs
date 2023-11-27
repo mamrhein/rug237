@@ -13,7 +13,7 @@ use std::{
 };
 
 use clap::Parser;
-use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
+use rug237::{EMAX, EMIN, FP255, MIN_EXP_SUBNORMAL, PM1};
 
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
@@ -27,7 +27,7 @@ const SUBNORMAL_EXP_RANGE: RangeInclusive<i32> =
 const NORMAL_EXP_RANGE: RangeInclusive<i32> =
     NORMAL_EXP_LOWER_BOUND..=EXP_UPPER_BOUND;
 
-fn print_test_item(x: &FP237, y: &FP237, z: &FP237) {
+fn print_test_item(x: &FP255, y: &FP255, z: &FP255) {
     let rx = x.decode(true);
     let ry = y.decode(true);
     let rz = z.decode(true);
@@ -63,25 +63,25 @@ fn main() {
     let n_normal = args.n_test_data - 2 * n_sub_normal;
 
     for _i in 0..n_normal {
-        let x = FP237::random_from_exp_range(&NORMAL_EXP_RANGE);
+        let x = FP255::random_from_exp_range(&NORMAL_EXP_RANGE);
         let (_, e, _) = x.decode(false);
         let lower_limit = max(EMIN - PM1, e - PM1 - EMAX + 2);
         let upper_limit = min(EMAX - PM1, e - PM1 - EMIN - 2);
-        let y = FP237::random_from_exp_range(&(lower_limit..=upper_limit));
+        let y = FP255::random_from_exp_range(&(lower_limit..=upper_limit));
         let z = &x / &y;
         print_test_item(&x, &y, &z);
     }
 
     for _i in 0..n_sub_normal {
-        let x = FP237::random_from_exp_range(&NORMAL_EXP_RANGE);
-        let y = FP237::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
+        let x = FP255::random_from_exp_range(&NORMAL_EXP_RANGE);
+        let y = FP255::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
         let z = &x / &y;
         print_test_item(&x, &y, &z);
     }
 
     for _i in 0..n_sub_normal {
-        let x = FP237::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
-        let y = FP237::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
+        let x = FP255::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
+        let y = FP255::random_from_exp_range(&SUBNORMAL_EXP_RANGE);
         let z = &x / &y;
         print_test_item(&x, &y, &z);
     }

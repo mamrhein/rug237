@@ -10,7 +10,7 @@
 use std::ops::RangeInclusive;
 
 use clap::Parser;
-use rug237::{EMAX, EMIN, FP237, MIN_EXP_SUBNORMAL, PM1};
+use rug237::{EMAX, EMIN, FP255, MIN_EXP_SUBNORMAL, PM1};
 
 const SUBNORMAL_EXP_LOWER_BOUND: i32 = MIN_EXP_SUBNORMAL;
 const SUBNORMAL_EXP_UPPER_BOUND: i32 = EMIN - 1;
@@ -24,7 +24,7 @@ const SUBNORMAL_EXP_RANGE: RangeInclusive<i32> =
 const NORMAL_EXP_RANGE: RangeInclusive<i32> =
     NORMAL_EXP_LOWER_BOUND..=EXP_UPPER_BOUND;
 
-fn print_test_item(x: &FP237, z: &FP237) {
+fn print_test_item(x: &FP255, z: &FP255) {
     let rx = x.decode(true);
     let rz = z.decode(true);
     // assert_ne!(
@@ -64,13 +64,13 @@ fn main() {
     let n_normal = args.n_test_data - n_sub_normal;
 
     for _i in 0..n_normal {
-        let x = FP237::random_from_exp_range(&NORMAL_EXP_RANGE).abs();
+        let x = FP255::random_from_exp_range(&NORMAL_EXP_RANGE).abs();
         let z = x.clone().sqrt();
         print_test_item(&x, &z);
     }
 
     for _i in 0..n_sub_normal {
-        let x = FP237::random_from_exp_range(&SUBNORMAL_EXP_RANGE).abs();
+        let x = FP255::random_from_exp_range(&SUBNORMAL_EXP_RANGE).abs();
         let z = x.clone().sqrt();
         print_test_item(&x, &z);
     }

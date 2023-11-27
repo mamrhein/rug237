@@ -9,49 +9,27 @@
 
 use rug::{Float, Integer};
 
-const P: u32 = 249;
+const P: u32 = 255;
 
 fn main() {
     let b: Integer = Integer::from(1) << 128;
-    let const_pi = Float::with_val(P + 5, rug::float::Constant::Pi);
-
-    let tau = Float::with_val(P + 2, 2 * const_pi.clone());
-    let (m, e) = tau.to_integer_exp().unwrap();
-    // println!("{e} {m:064x}");
-    assert_eq!(e, -248);
-    let (q, r) = &m.div_rem(b.clone());
-    let hi: u128 = q.to_u128_wrapping();
-    let lo: u128 = r.to_u128_wrapping();
-    assert_eq!(hi.leading_zeros(), 5);
-    println!("    // {tau}");
-    println!(
-        "    pub(crate) const TAU: FP248 = FP248 {{\n sign: 0,\n signif: \
-         u256::new(0x{hi:>032x}, 0x{lo:>032x}),\n }};"
-    );
-    let pi = Float::with_val(P + 1, const_pi.clone());
+    let pi = Float::with_val(P, rug::float::Constant::Pi);
     let (m, e) = pi.to_integer_exp().unwrap();
     // println!("{e} {m:064x}");
-    assert_eq!(e, -248);
+    assert_eq!(e, -253);
     let (q, r) = &m.div_rem(b.clone());
     let hi: u128 = q.to_u128_wrapping();
     let lo: u128 = r.to_u128_wrapping();
-    assert_eq!(hi.leading_zeros(), 6);
+    assert_eq!(hi.leading_zeros(), 1);
     println!("    // {pi}");
     println!(
-        "    pub(crate) const PI: FP248 = FP248 {{\n sign: 0,\n signif: \
-         u256::new(0x{hi:>032x}, 0x{lo:>032x}),\n }};"
+        "    pub(crate) const PI: FP255 = FP255 {{ sign: 0, exp: 1, signif: \
+         u256::new(0x{hi:>032x}, 0x{lo:>032x}), }};"
     );
-    let frac_pi_2 = Float::with_val(P, const_pi.clone() / 2);
-    let (m, e) = frac_pi_2.to_integer_exp().unwrap();
-    // println!("{e} {m:064x}");
-    assert_eq!(e, -248);
-    let (q, r) = &m.div_rem(b.clone());
-    let hi: u128 = q.to_u128_wrapping();
-    let lo: u128 = r.to_u128_wrapping();
-    assert_eq!(hi.leading_zeros(), 7);
+    let frac_pi_2 = Float::with_val(P, pi.clone() / 2);
     println!("    // {frac_pi_2}");
     println!(
-        "    pub(crate) const FRAC_PI_2: FP248 = FP248 {{\n sign: 0,\n \
-         signif: u256::new(0x{hi:>032x}, 0x{lo:>032x}),\n }};"
+        "    pub(crate) const FRAC_PI_2: FP255 = FP255 {{ sign: 0, exp: 0, \
+         signif: u256::new(0x{hi:>032x}, 0x{lo:>032x}), }};"
     );
 }
