@@ -21,19 +21,19 @@ use rug::{
     Assign, Float, Integer,
 };
 
-pub const P: u32 = 255;
+pub const P: u32 = 237;
 pub const PM1: i32 = P as i32 - 1;
 pub const EMAX: i32 = 262143;
 pub const EMIN: i32 = 1 - EMAX;
 pub const MIN_EXP_SUBNORMAL: i32 = EMIN - PM1;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct FP255 {
+pub struct FP237 {
     pub f: Float,
     pub(crate) o: Ordering,
 }
 
-impl FP255 {
+impl FP237 {
     #[allow(non_snake_case)]
     pub fn Log2() -> Self {
         Self {
@@ -210,7 +210,7 @@ impl FP255 {
     }
 }
 
-impl FromStr for FP255 {
+impl FromStr for FP237 {
     type Err = ParseFloatError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -226,7 +226,7 @@ impl FromStr for FP255 {
     }
 }
 
-impl Display for FP255 {
+impl Display for FP237 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if self.f.is_integer() {
             let mut i = self.f.to_integer().unwrap();
@@ -253,20 +253,20 @@ impl Display for FP255 {
     }
 }
 
-impl LowerExp for FP255 {
+impl LowerExp for FP237 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         LowerExp::fmt(&self.f, f)
     }
 }
 
-impl PartialOrd for FP255 {
+impl PartialOrd for FP237 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.f.partial_cmp(&other.f)
     }
 }
 
-impl Add for &FP255 {
-    type Output = FP255;
+impl Add for &FP237 {
+    type Output = FP237;
 
     fn add(self, rhs: Self) -> Self::Output {
         let f = &self.f + &rhs.f;
@@ -275,8 +275,8 @@ impl Add for &FP255 {
     }
 }
 
-impl Sub for &FP255 {
-    type Output = FP255;
+impl Sub for &FP237 {
+    type Output = FP237;
 
     fn sub(self, rhs: Self) -> Self::Output {
         let f = &self.f - &rhs.f;
@@ -285,8 +285,8 @@ impl Sub for &FP255 {
     }
 }
 
-impl Mul for &FP255 {
-    type Output = FP255;
+impl Mul for &FP237 {
+    type Output = FP237;
 
     fn mul(self, rhs: Self) -> Self::Output {
         let f = &self.f * &rhs.f;
@@ -295,8 +295,8 @@ impl Mul for &FP255 {
     }
 }
 
-impl Div for &FP255 {
-    type Output = FP255;
+impl Div for &FP237 {
+    type Output = FP237;
 
     fn div(self, rhs: Self) -> Self::Output {
         let f = &self.f / &rhs.f;
@@ -305,8 +305,8 @@ impl Div for &FP255 {
     }
 }
 
-impl Rem for &FP255 {
-    type Output = FP255;
+impl Rem for &FP237 {
+    type Output = FP237;
 
     fn rem(self, rhs: Self) -> Self::Output {
         let f = &self.f % &rhs.f;
@@ -322,7 +322,7 @@ mod decode_tests {
     #[test]
     fn test_from_str() {
         let s = "17.625";
-        let f = FP255::from_str(s).unwrap();
+        let f = FP237::from_str(s).unwrap();
         // println!("{}", f);
         assert_eq!(f.decode(true), (0, -3, (0, 141)));
     }
@@ -331,7 +331,7 @@ mod decode_tests {
     fn test_min_pos_subnormal() {
         let e = Float::with_val(P, Float::parse("-262378.").unwrap());
         let t = e.exp2();
-        let f = FP255 {
+        let f = FP237 {
             f: t.clone(),
             o: Ordering::Equal,
         };
@@ -341,7 +341,7 @@ mod decode_tests {
     #[test]
     fn test_subnormal() {
         let s = "-0.9818036132127703363504450836394764653184121e-78913";
-        let f = FP255::from_str(s).unwrap();
+        let f = FP237::from_str(s).unwrap();
         assert_eq!(
             f.decode(true),
             (
@@ -358,7 +358,7 @@ mod decode_tests {
     #[test]
     fn test_subnormal_near_zero() {
         let s = "-21.75e-78985";
-        let f = FP255::from_str(s).unwrap();
+        let f = FP237::from_str(s).unwrap();
         assert_eq!(f.decode(true), (1, -262378, (0, 1)));
     }
 
@@ -369,7 +369,7 @@ mod decode_tests {
         let e = Float::with_val(P, Float::parse("261907.").unwrap());
         let b = e.exp2();
         let t = a - b;
-        let f = FP255 {
+        let f = FP237 {
             f: t.clone(),
             o: Ordering::Equal,
         };
@@ -383,7 +383,7 @@ mod decode_tests {
     #[test]
     fn test_normal_gt1() {
         let s = "320.1000009";
-        let f = FP255::from_str(s).unwrap();
+        let f = FP237::from_str(s).unwrap();
         // println!("{}", f);
         assert_eq!(
             f.decode(true),
@@ -408,7 +408,7 @@ mod decode_tests {
         // println!("{c}");
         let (f, o) = Float::with_val_round(P, &c, Round::Nearest);
         // println!("{f:.0}");
-        let f = FP255 { f, o };
+        let f = FP237 { f, o };
         assert_eq!(f.f.prec(), P);
         let (s, e, (h, _)) = f.decode(false);
         assert!(s == 0 || s == 1);
@@ -429,7 +429,7 @@ mod decode_tests {
         m <<= 128;
         m += Integer::from(l);
         let t = Float::with_val(P, e).exp2();
-        let f = FP255 {
+        let f = FP237 {
             f: m * t,
             o: Ordering::Equal,
         };
@@ -446,7 +446,7 @@ mod rnd_tests {
     #[test]
     fn test_normal_lt1() {
         let exp_range: RangeInclusive<i32> = -304..=-236;
-        let f = FP255::random_from_exp_range(&exp_range);
+        let f = FP237::random_from_exp_range(&exp_range);
         assert_eq!(f.f.prec(), P);
         let (s, e, (h, _)) = f.decode(true);
         assert!(s == 0 || s == 1);
@@ -457,7 +457,7 @@ mod rnd_tests {
     #[test]
     fn test_normal_2_pow_275() {
         let exp_range: RangeInclusive<i32> = 275..=275;
-        let f = FP255::random_from_exp_range(&exp_range);
+        let f = FP237::random_from_exp_range(&exp_range);
         assert_eq!(f.f.prec(), P);
         let (s, e, (h, _)) = f.decode(false);
         assert!(s == 0 || s == 1);
@@ -472,13 +472,13 @@ mod const_tests {
 
     #[test]
     fn show_consts() {
-        let c = FP255::Log2();
+        let c = FP237::Log2();
         println!("Log2:\n{c} = {:?}", c.decode(true));
-        let c = FP255::Pi();
+        let c = FP237::Pi();
         println!("Pi:\n{c} = {:?}", c.decode(true));
-        let c = FP255::Euler();
+        let c = FP237::Euler();
         println!("Euler:\n{c} = {:?}", c.decode(true));
-        let c = FP255::Catalan();
+        let c = FP237::Catalan();
         println!("Catalan:\n{c} = {:?}", c.decode(true));
     }
 }
@@ -498,12 +498,12 @@ mod add_sub_tests {
         let e = Float::parse("-376").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let e = Float::parse("-376").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         let z = &x + &y;
         println!("{:?}", z.decode(false));
@@ -522,11 +522,11 @@ mod add_sub_tests {
         let e = Float::parse("-262376").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         c += 1;
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let z = &x - &y;
         println!("{:?}", z.decode(true));
@@ -543,11 +543,11 @@ mod add_sub_tests {
         .unwrap()
         .complete();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let c = Integer::parse("21747048302197486").unwrap().complete();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         let z = &x + &y;
         println!("{:?}", z.decode(false));
@@ -574,13 +574,13 @@ mod mul_tests {
         let e = Float::parse("-23718").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let c = Integer::parse("21747048302197486").unwrap().complete();
         let e = Float::parse("29").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         let z = &x * &y;
         println!("{:?}", z.decode(false));
@@ -595,12 +595,12 @@ mod mul_tests {
         let e = Float::parse("262140").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let e = Float::parse("4").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         let z = &x * &y;
         println!("{:?}", z.decode(false));
@@ -620,13 +620,13 @@ mod div_tests {
         let e = Float::parse("-23718").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         // println!("{:?}", x.decode(false));
         let c = Integer::parse("7777").unwrap().complete();
         let e = Float::parse("-23720").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         // println!("{:?}", y.decode(false));
         let z = &x / &y;
         // println!("{:?}", z.decode(true));
@@ -648,12 +648,12 @@ mod div_tests {
         let e = Float::parse("262140").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(false));
         let e = Float::parse("4").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(false));
         let z = &x * &y;
         println!("{:?}", z.decode(false));
@@ -670,12 +670,12 @@ mod rem_tests {
     #[test]
     fn test_normal_1() {
         let (f, o) = Float::with_val_round(P, 3.297338e302, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         let (f, o) = Float::with_val_round(P, 1.008297e-297, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         let (f, o) =
             Float::with_val_round(P, 7.06898110067969e-298, Round::Nearest);
-        let z = FP255 { f, o };
+        let z = FP237 { f, o };
         // println!("{x:e} % {y:e} = {z:e}");
         assert_eq!((&x % &y).f, z.f);
     }
@@ -683,12 +683,12 @@ mod rem_tests {
     #[test]
     fn test_normal_2() {
         let f = Float::parse("1.4e78118").unwrap().complete(P);
-        let x = FP255 {
+        let x = FP237 {
             f,
             o: Ordering::Equal,
         };
         let f = Float::parse("1.7e-25009").unwrap().complete(P);
-        let y = FP255 {
+        let y = FP237 {
             f,
             o: Ordering::Equal,
         };
@@ -704,7 +704,7 @@ mod sqrt_tests {
 
     use super::*;
 
-    fn print_test_item(x: &FP255, z: &FP255) {
+    fn print_test_item(x: &FP237, z: &FP237) {
         let rx = x.decode(true);
         let rz = z.decode(true);
         println!(
@@ -716,7 +716,7 @@ mod sqrt_tests {
     #[test]
     fn test_normal_1() {
         let (f, o) = Float::with_val_round(P, 7., Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         let z = x.clone().sqrt();
         println!("√{x:e} = {z:e}");
         println!("{:?}", x.decode(false));
@@ -732,7 +732,7 @@ mod sqrt_tests {
         let e = Float::parse("-262021").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         let z = x.clone().sqrt();
         println!("√{x:e} = {z:e}");
         println!("{:?}", x.decode(true));
@@ -748,7 +748,7 @@ mod sqrt_tests {
         m <<= 128;
         m += Integer::from(l);
         let t = Float::with_val(P, e).exp2();
-        let f = FP255 {
+        let f = FP237 {
             f: m * t,
             o: Ordering::Equal,
         };
@@ -770,7 +770,7 @@ mod sqrt_tests {
         m <<= 128;
         m += Integer::from(l);
         let t = Float::with_val(P, e).exp2();
-        let f = FP255 {
+        let f = FP237 {
             f: m * t,
             o: Ordering::Equal,
         };
@@ -790,7 +790,7 @@ mod sqrt_tests {
         let e = Float::parse("-262375").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t * &c, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         let z = x.clone().sqrt();
         println!("√{x:e} = {z:e}");
         println!("{:?}", x.decode(true));
@@ -809,16 +809,16 @@ mod fma_tests {
     fn test_no_diff_to_non_fused() {
         let t = Float::parse("1.5").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let one_and_a_half = FP255 { f, o };
+        let one_and_a_half = FP237 { f, o };
         let t = Float::parse("2.0").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let two = FP255 { f, o };
+        let two = FP237 { f, o };
         let t = Float::parse("3.0").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let three = FP255 { f, o };
+        let three = FP237 { f, o };
         assert_eq!(
-            one_and_a_half.fma(&two, &FP255::Pi()),
-            &FP255::Pi() + &three
+            one_and_a_half.fma(&two, &FP237::Pi()),
+            &FP237::Pi() + &three
         );
     }
 
@@ -826,11 +826,11 @@ mod fma_tests {
     fn test_small_diff_to_non_fused() {
         let t = Float::parse("1.0").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let one = FP255 { f, o };
+        let one = FP237 { f, o };
         let e = Float::parse("-237").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let d = FP255 { f, o };
+        let d = FP237 { f, o };
         let x = &one - &d;
         let y = &x;
         let a = &(&d + &d) - &one;
@@ -850,19 +850,19 @@ mod fma_tests {
         let t = e.exp2();
         let m = Float::parse("-40901480905045544498406800675204866629143691002339835783757486257606735").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
-        let x = FP255 { f, o };
+        let x = FP237 { f, o };
         println!("{:?}", x.decode(true));
         let e = Float::parse("202197").unwrap().complete(P);
         let t = e.exp2();
         let m = Float::parse("190854343998886546791476171399145128666427780394331938864477511960147119").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
-        let y = FP255 { f, o };
+        let y = FP237 { f, o };
         println!("{:?}", y.decode(true));
         let e = Float::parse("-7930").unwrap().complete(P);
         let t = e.exp2();
         let m = Float::parse("-12842618913023200758447616413804922508126617643079319769168854255306905").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &m * &t, Round::Nearest);
-        let a = FP255 { f, o };
+        let a = FP237 { f, o };
         println!("{:?}", a.decode(true));
         let z = x.fma(&y, &a);
         println!("{:?}", z.decode(true));
@@ -884,11 +884,11 @@ mod sos_tests {
     fn test_small_diff_to_non_fused() {
         let t = Float::parse("1.0").unwrap().complete(P);
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let one = FP255 { f, o };
+        let one = FP237 { f, o };
         let e = Float::parse("-117").unwrap().complete(P);
         let t = e.exp2();
         let (f, o) = Float::with_val_round(P, &t, Round::Nearest);
-        let d = FP255 { f, o };
+        let d = FP237 { f, o };
         let d2 = &d * &d;
         let x = &one + &d;
         let y = &one - &d;
@@ -897,7 +897,7 @@ mod sos_tests {
         t *= 2;
         t += 2;
         let (f, o) = Float::with_val_round(P, t, Round::Nearest);
-        let r = FP255 { f, o };
+        let r = FP237 { f, o };
         println!(" d: {:?}\nd2: {:?}", d.decode(false), d2.decode(false));
         println!(" 1: {:?}", one.decode(false));
         println!(" x: {:?}\n y: {:?}", x.decode(false), y.decode(false));
@@ -928,12 +928,12 @@ mod sin_tests {
             Float::parse(s).unwrap(),
             Round::Nearest,
         );
-        let a = FP255 { f, o };
+        let a = FP237 { f, o };
         let ph = Float::with_val(250, Constant::Pi).div(2);
         let ad = Float::with_val(250, a.clone().f);
         // let ph = FP237::Pi().div(&FP237::from_str("2.0").unwrap());
         let rd = ad % ph;
-        let r = FP255 {
+        let r = FP237 {
             f: Float::with_val(P, rd),
             o: Ordering::Equal,
         };
@@ -944,9 +944,9 @@ mod sin_tests {
         // println!("{:e}\n{:e}\n{:e}", a.f, ph.f, r.f);
         let c = Integer::from(2).div(Float::with_val(250, Constant::Pi));
         let (f, o) = Float::with_val_round(P, &c, Round::Nearest);
-        let ch = FP255 { f, o };
+        let ch = FP237 { f, o };
         let (f, o) = Float::with_val_round(P, &c - &ch.f, Round::Nearest);
-        let cl = FP255 { f, o };
+        let cl = FP237 { f, o };
         println!("{}", c);
         println!("{}", ch.f);
         println!("{}", cl.f);
@@ -962,10 +962,10 @@ mod sin_tests {
             Float::parse(s).unwrap(),
             Round::Nearest,
         );
-        let a = FP255 { f, o };
+        let a = FP237 { f, o };
         println!("{:?}", a.decode(false));
         println!("{:?}", a.sin().decode(true));
-        let ph = FP255::Pi().div(&FP255::from_str("2.0").unwrap());
+        let ph = FP237::Pi().div(&FP237::from_str("2.0").unwrap());
         let r = &a % &ph;
         println!("{:?}", r.decode(false));
         println!("{:?}", r.sin().decode(true));
