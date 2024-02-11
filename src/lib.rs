@@ -10,7 +10,7 @@
 use std::{
     cmp::Ordering,
     fmt::{Display, Formatter, LowerExp},
-    ops::{Add, Div, Mul, RangeInclusive, Rem, Sub},
+    ops::{Add, Div, Mul, Neg, RangeInclusive, Rem, Sub},
     str::FromStr,
 };
 
@@ -208,6 +208,29 @@ impl FP237 {
         }
         Self { f, o }
     }
+
+    // pub fn recip_factorial(n: u32) -> Self {
+    //     let mut f = Self::new(Float::with_val(P, 1));
+    //     for i in 2..=n {
+    //         f /= Self::new(Float::with_val(P, i));
+    //     }
+    //     f
+    // }
+}
+
+impl Default for FP237 {
+    fn default() -> Self {
+        FP237::from(0)
+    }
+}
+
+impl From<u32> for FP237 {
+    fn from(value: u32) -> Self {
+        FP237 {
+            f: Float::with_val(P, value),
+            o: Ordering::Equal,
+        }
+    }
 }
 
 impl FromStr for FP237 {
@@ -262,6 +285,17 @@ impl LowerExp for FP237 {
 impl PartialOrd for FP237 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.f.partial_cmp(&other.f)
+    }
+}
+
+impl Neg for FP237 {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            f: -self.f,
+            o: self.o,
+        }
     }
 }
 
