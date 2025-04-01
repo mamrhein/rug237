@@ -130,6 +130,24 @@ impl FP237 {
         Self { f, o }
     }
 
+    pub fn asin(&self) -> Self {
+        let f = self.f.asin_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn acos(&self) -> Self {
+        let f = self.f.acos_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn atan(&self) -> Self {
+        let f = self.f.atan_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
     pub fn decode(&self, reduce: bool) -> (u32, i32, (u128, u128)) {
         let b: Integer = Integer::from(u128::MAX) + 1;
         match self.f.to_integer_exp() {

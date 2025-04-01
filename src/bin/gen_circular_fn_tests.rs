@@ -9,10 +9,7 @@
 
 use clap::Parser;
 use rug::{ops::CompleteRound, Float};
-use rug237::{FP237, P, PM1};
-
-const EXP_UPPER_BOUND: i32 = 2 * PM1 + 14;
-const EXP_LOWER_BOUND: i32 = -PM1 / 2 - 4;
+use rug237::{EMAX, FP237, P, PM1};
 
 fn print_test_item(x: &FP237, z: &FP237) {
     let rx = x.decode(false);
@@ -26,10 +23,10 @@ fn print_test_item(x: &FP237, z: &FP237) {
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// circular function: sin cos tan cot
+    /// circular function: sin cos tan asin acos atan
     #[arg(short, long, default_value = "sin")]
     func: String,
-    /// Range of input value f: C = 0..2π S = 2π..T L = T..
+    /// Range of input value f: 1 = 0..1 C = 0..2π S = 2π..T L = T..
     #[arg(short, long, default_value_t = 'C')]
     range: char,
     /// Number of test data to generate
@@ -42,20 +39,23 @@ fn main() {
 
     let pi = Float::with_val(P + 1, rug::float::Constant::Pi);
     let tau = FP237::new(Float::with_val(P, 2 * pi));
-    let lower_limit =
-        FP237::new(Float::u_exp(2, EXP_LOWER_BOUND).complete(P));
-    let fast_limit = FP237::new(Float::u_exp(2, 20).complete(P));
+    let one = FP237::new(Float::with_val(P, 1));
+    let lower_limit = FP237::new(Float::u_exp(2, -120).complete(P.into()));
+    let fast_limit = FP237::new(Float::u_exp(2, 240).complete(P.into()));
     let upper_limit =
-        FP237::new(Float::u_exp(2, EXP_UPPER_BOUND).complete(P));
+        FP237::new(Float::u_exp(2, EMAX + 1).complete(P.into()));
 
     let func = match args.func.as_str() {
         "sin" => FP237::sin,
         "cos" => FP237::cos,
         "tan" => FP237::tan,
-        "cot" => FP237::cot,
+        "asin" => FP237::asin,
+        "acos" => FP237::acos,
+        "atan" => FP237::atan,
         _ => panic!("Unkown func"),
     };
     let range = match args.range {
+        '1' => lower_limit..one,
         'C' => lower_limit..tau,
         'S' => tau..fast_limit,
         'L' => fast_limit..upper_limit,
