@@ -17,7 +17,7 @@ use std::{
 use rand::prelude::*;
 use rug::{
     float::{Constant, ParseFloatError, Round},
-    ops::Pow,
+    ops::{CompleteRound, Pow},
     Assign, Float, Integer,
 };
 
@@ -145,6 +145,37 @@ impl FP237 {
     pub fn atan(&self) -> Self {
         let f = self.f.atan_ref();
         let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn ln(&self) -> Self {
+        let f = self.f.ln_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn ln_1p(&self) -> Self {
+        let f = self.f.ln_1p_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn log2(&self) -> Self {
+        let f = self.f.log2_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn log10(&self) -> Self {
+        let f = self.f.log10_ref();
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
+    pub fn log(&self, base: &Self) -> Self {
+        let f = self.f.ln_ref().complete(512);
+        let b = base.f.ln_ref().complete(512);
+        let (f, o) = Float::with_val_round(P, f / b, Round::Nearest);
         Self { f, o }
     }
 
