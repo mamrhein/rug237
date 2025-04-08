@@ -179,6 +179,12 @@ impl FP237 {
         Self { f, o }
     }
 
+    pub fn powi(&self, n: i32) -> Self {
+        let f = self.clone().f.pow(&n);
+        let (f, o) = Float::with_val_round(P, f, Round::Nearest);
+        Self { f, o }
+    }
+
     pub fn decode(&self, reduce: bool) -> (u32, i32, (u128, u128)) {
         let b: Integer = Integer::from(u128::MAX) + 1;
         match self.f.to_integer_exp() {
@@ -265,6 +271,16 @@ impl FP237 {
     //     }
     //     f
     // }
+}
+
+pub fn random_i32(exp_range: &RangeInclusive<i32>) -> i32 {
+    let mut rng = thread_rng();
+    let s = rng.gen_range(0..=1_u32);
+    let mut i: i32 = rng.gen_range(exp_range.clone());
+    if s == 1 {
+        i = -i;
+    }
+    i
 }
 
 impl Default for FP237 {
